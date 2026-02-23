@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎂 Birthday Card Maker</title>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Nunito:wght@400;600;700&family=Dancing+Script:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --pink:   #ff4d8d;
+    --orange: #ff8c42;
+    --yellow: #ffd166;
+    --green:  #06d6a0;
+    --blue:   #4895ef;
+    --purple: #b388ff;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    min-height: 100vh;
+    background: #1a0533;
+    overflow-x: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Floating bg dots ── */
+  .bg-dots { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
+  .dot {
+    position: absolute; border-radius: 50%; opacity: 0.15;
+    animation: floatUp linear infinite;
+  }
+  @keyframes floatUp {
+    from { transform: translateY(110vh) rotate(0deg); }
+    to   { transform: translateY(-10vh) rotate(720deg); opacity: 0; }
+  }
+
+  /* ── Rainbow banner ── */
+  .banner {
+    position: relative; z-index: 2; width: 100%;
+    background: linear-gradient(90deg, #ff4d8d, #ff8c42, #ffd166, #06d6a0, #4895ef, #b388ff, #ff4d8d);
+    background-size: 300% 100%;
+    animation: bannerShift 4s linear infinite;
+    padding: 7px 0; text-align: center; font-size: 1.1rem;
+    letter-spacing: 10px; white-space: nowrap; overflow: hidden;
+  }
+  @keyframes bannerShift {
+    0%   { background-position: 0% 0%; }
+    100% { background-position: 100% 0%; }
+  }
+
+  /* ── Page title ── */
+  .page-title {
+    position: relative; z-index: 2;
+    text-align: center;
+    padding: 40px 20px 12px;
+  }
+
+  .title-letters {
+    display: inline-flex;
+    gap: 2px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .title-letters .letter {
+    font-family: 'Pacifico', cursive;
+    font-size: clamp(2.6rem, 6vw, 5rem);
+    display: inline-block;
+    animation: letterBounce 2s ease-in-out infinite;
+    line-height: 1;
+    filter: drop-shadow(0 3px 10px rgba(0,0,0,0.4));
+  }
+  /* Each letter gets a different color & delay */
+  .letter:nth-child(1)  { color: #ff4d8d; animation-delay: 0s; }
+  .letter:nth-child(2)  { color: #ff6ba0; animation-delay: 0.08s; }
+  .letter:nth-child(3)  { color: #ff8c42; animation-delay: 0.16s; }
+  .letter:nth-child(4)  { color: #ffa500; animation-delay: 0.24s; }
+  .letter:nth-child(5)  { color: #ffd166; animation-delay: 0.32s; }
+  .letter:nth-child(6)  { color: #ffe566; animation-delay: 0.40s; }
+  .letter:nth-child(7)  { color: #06d6a0; animation-delay: 0.48s; }
+  .letter:nth-child(8)  { color: #00c080; animation-delay: 0.56s; }
+  .letter:nth-child(9)  { color: #4895ef; animation-delay: 0.64s; }
+  .letter:nth-child(10) { color: #6bb0ff; animation-delay: 0.72s; }
+  .letter:nth-child(11) { color: #b388ff; animation-delay: 0.80s; }
+  .letter:nth-child(12) { color: #d0a0ff; animation-delay: 0.88s; }
+  .letter:nth-child(13) { color: #ff4d8d; animation-delay: 0.96s; }
+  .letter:nth-child(14) { color: #ff8c42; animation-delay: 1.04s; }
+  .letter:nth-child(15) { color: #ffd166; animation-delay: 1.12s; }
+  .letter:nth-child(16) { color: #06d6a0; animation-delay: 1.20s; }
+  .letter:nth-child(17) { color: #4895ef; animation-delay: 1.28s; }
+  .letter:nth-child(18) { color: #b388ff; animation-delay: 1.36s; }
+  .letter:nth-child(19) { color: #ff4d8d; animation-delay: 1.44s; }
+  .letter:nth-child(20) { color: #ff8c42; animation-delay: 1.52s; }
+  /* space character */
+  .letter.space { width: 0.4em; }
+
+  @keyframes letterBounce {
+    0%, 60%, 100% { transform: translateY(0) rotate(0deg) scale(1); }
+    30%            { transform: translateY(-14px) rotate(-4deg) scale(1.12); }
+    45%            { transform: translateY(-6px) rotate(2deg) scale(1.05); }
+  }
+
+  .title-tagline {
+    color: rgba(255,255,255,0.6);
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin-top: 10px;
+    letter-spacing: 0.3px;
+  }
+
+  /* ── Main layout ── */
+  .workspace {
+    position: relative; z-index: 2;
+    display: flex;
+    gap: 40px;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 28px 32px 60px;
+    flex-wrap: wrap;
+  }
+
+  /* ── LEFT: sticky form ── */
+  .form-panel {
+    flex: 0 0 360px;
+    min-width: 280px;
+    position: sticky;
+    top: 24px;
+    background: rgba(255,255,255,0.07);
+    backdrop-filter: blur(16px);
+    border-radius: 28px;
+    padding: 32px;
+    border: 1.5px solid rgba(255,255,255,0.14);
+    box-shadow: 0 8px 48px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
+  }
+
+  .form-label-top {
+    font-family: 'Pacifico', cursive;
+    font-size: 1.05rem;
+    color: rgba(255,255,255,0.85);
+    margin-bottom: 22px;
+    text-align: center;
+    letter-spacing: 0.5px;
+  }
+
+  .field { margin-bottom: 18px; }
+
+  label {
+    display: block; font-weight: 700; margin-bottom: 6px;
+    font-size: 0.82rem; color: rgba(255,255,255,0.7);
+    text-transform: uppercase; letter-spacing: 1.2px;
+  }
+
+  input {
+    width: 100%; padding: 12px 15px;
+    border: 2px solid rgba(255,255,255,0.12);
+    border-radius: 13px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.97rem; font-weight: 600;
+    color: #fff; background: rgba(255,255,255,0.08);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  }
+  input::placeholder { color: rgba(255,255,255,0.28); }
+  input:focus {
+    border-color: var(--yellow);
+    box-shadow: 0 0 0 3px rgba(255,209,102,0.18);
+    background: rgba(255,255,255,0.13);
+  }
+
+  #generateBtn {
+    width: 100%; padding: 14px;
+    background: linear-gradient(135deg, var(--pink), var(--orange));
+    color: white; border: none; border-radius: 15px;
+    font-family: 'Pacifico', cursive; font-size: 1.15rem;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s, filter 0.15s;
+    box-shadow: 0 6px 24px rgba(255,77,141,0.5);
+    margin-top: 8px;
+  }
+  #generateBtn:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 10px 32px rgba(255,77,141,0.65);
+    filter: brightness(1.08);
+  }
+  #generateBtn:active { transform: translateY(0) scale(0.99); }
+  #generateBtn:disabled {
+    background: #555; box-shadow: none;
+    cursor: not-allowed; transform: none; filter: none;
+  }
+
+  .error {
+    color: var(--yellow); font-size: 0.88rem;
+    margin-top: 10px; text-align: center;
+    font-weight: 700; min-height: 20px;
+  }
+
+  /* ── RIGHT: scrollable card stack ── */
+  .card-stack-panel {
+    flex: 0 0 500px;
+    min-width: 300px;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+  }
+
+  /* Loading placeholder card (shown while fetching) */
+  .loading-card .card-inner {
+    min-height: 200px;
+  }
+
+  /* ── Individual open birthday card ── */
+  .open-card {
+    display: flex;
+    filter: drop-shadow(0 20px 50px rgba(0,0,0,0.6));
+    border-radius: 12px;
+    animation: slideInCard 0.5s cubic-bezier(0.34, 1.45, 0.64, 1);
+  }
+  @keyframes slideInCard {
+    from { opacity: 0; transform: translateY(-28px) scale(0.95); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  /* Cover colours cycle through an array set via JS inline style */
+  .card-cover {
+    flex: 0 0 72px;
+    border-radius: 12px 0 0 12px;
+    position: relative;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 10px;
+    box-shadow: inset -5px 0 12px rgba(0,0,0,0.25);
+    min-height: 320px;
+  }
+  .card-cover::after {
+    content: '';
+    position: absolute; right: 0; top: 0; bottom: 0; width: 6px;
+    background: linear-gradient(to right, rgba(0,0,0,0.3), rgba(0,0,0,0.05));
+  }
+  .cover-icons {
+    font-size: 1.3rem;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .cover-text {
+    writing-mode: vertical-rl; text-orientation: mixed;
+    transform: rotate(180deg);
+    font-family: 'Pacifico', cursive;
+    color: rgba(255,255,255,0.92);
+    font-size: 0.88rem; letter-spacing: 3px;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+
+  /* Inner page */
+  .card-inner {
+    flex: 1;
+    background: #fffef5;
+    border-radius: 0 12px 12px 0;
+    padding: 36px 32px 28px;
+    position: relative; overflow: hidden;
+    min-height: 320px;
+    display: flex; flex-direction: column;
+  }
+  /* Lined paper */
+  .card-inner::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image: repeating-linear-gradient(
+      transparent, transparent 31px,
+      #ddd6f0 31px, #ddd6f0 32px
+    );
+    background-position: 0 52px;
+    opacity: 0.4; pointer-events: none;
+  }
+  .margin-line {
+    position: absolute; top: 0; bottom: 0; left: 48px;
+    width: 1.5px; background: rgba(255,100,130,0.3);
+  }
+  .corner-deco {
+    position: absolute; font-size: 1.2rem; opacity: 0.28;
+  }
+  .corner-deco.tl { top: 8px; left: 10px; }
+  .corner-deco.tr { top: 8px; right: 10px; }
+  .corner-deco.bl { bottom: 8px; left: 10px; }
+  .corner-deco.br { bottom: 8px; right: 10px; }
+
+  .card-name-tag {
+    font-family: 'Dancing Script', cursive;
+    font-size: 0.95rem; font-weight: 600;
+    color: #b0a0cc; margin-bottom: 6px;
+    position: relative; z-index: 1;
+    text-align: right;
+  }
+
+  .card-greeting {
+    font-family: 'Dancing Script', cursive;
+    font-size: 1.5rem; font-weight: 700;
+    color: #c94dff;
+    margin-bottom: 14px;
+    position: relative; z-index: 1;
+    text-align: center; line-height: 1.3;
+  }
+  .card-message-text {
+    font-family: 'Dancing Script', cursive;
+    font-size: 1.15rem; font-weight: 600;
+    line-height: 2; color: #2a2060;
+    white-space: pre-wrap; flex: 1;
+    position: relative; z-index: 1;
+  }
+  .card-sign-off {
+    font-family: 'Dancing Script', cursive;
+    font-size: 1.2rem; color: #ff4d8d;
+    margin-top: 14px; text-align: right;
+    font-weight: 700; position: relative; z-index: 1;
+  }
+
+  /* Loading state inside a card */
+  .card-loading {
+    flex: 1; display: flex;
+    flex-direction: column; align-items: center; justify-content: center;
+    gap: 12px; position: relative; z-index: 1;
+  }
+  .card-loading p {
+    font-family: 'Dancing Script', cursive;
+    font-size: 1.1rem; color: #c0b8d8; text-align: center;
+  }
+  .loading-dots span {
+    display: inline-block;
+    animation: bounce 0.6s infinite alternate; font-size: 2rem;
+  }
+  .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce {
+    from { transform: translateY(0); }
+    to   { transform: translateY(-10px); }
+  }
+
+  /* Per-card copy button */
+  .card-copy-btn {
+    width: 100%; margin-top: 12px; padding: 11px;
+    background: linear-gradient(135deg, var(--green), var(--blue));
+    color: white; border: none; border-radius: 13px;
+    font-family: 'Pacifico', cursive; font-size: 0.95rem;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 5px 20px rgba(6,214,160,0.4);
+  }
+  .card-copy-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(6,214,160,0.55);
+  }
+
+  /* Empty state hint */
+  .empty-hint {
+    text-align: center; padding: 48px 20px;
+    font-family: 'Dancing Script', cursive;
+    color: rgba(255,255,255,0.3);
+    font-size: 1.2rem; line-height: 1.8;
+  }
+  .empty-hint .big { font-size: 3rem; display: block; margin-bottom: 12px; }
+
+  #luckyBtn {
+    width: 100%; padding: 12px;
+    background: linear-gradient(135deg, var(--yellow), var(--orange));
+    color: #3a1a00; border: none; border-radius: 15px;
+    font-family: 'Pacifico', cursive; font-size: 1rem;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s, filter 0.15s;
+    box-shadow: 0 5px 20px rgba(255,209,102,0.45);
+    margin-top: 8px; margin-bottom: 10px;
+  }
+  #luckyBtn:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 8px 28px rgba(255,209,102,0.65);
+    filter: brightness(1.08);
+  }
+  #luckyBtn:active { transform: translateY(0) scale(0.99); }
+
+  /* flash animation on lucky fill */
+  @keyframes flashFill {
+    0%   { background: rgba(255,209,102,0.35); }
+    100% { background: rgba(255,255,255,0.08); }
+  }
+  input.lucky-flash {
+    animation: flashFill 0.5s ease-out forwards;
+  }
+
+  @media (max-width: 920px) {
+    .workspace { flex-direction: column; align-items: center; padding: 20px 16px 60px; }
+    .form-panel { position: static; flex: unset; width: 100%; max-width: 480px; }
+    .card-stack-panel { flex: unset; width: 100%; max-width: 480px; }
+    .title-letters .letter { font-size: clamp(2rem, 8vw, 3.5rem); }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-dots" id="bgDots"></div>
+
+<div class="banner">🎉 🎊 🎈 🎁 🥳 🎂 🎉 🎊 🎈 🎁 🥳 🎂 🎉 🎊 🎈 🎁 🥳 🎂 🎉 🎊 🎈</div>
+
+<!-- FUN ANIMATED TITLE -->
+<div class="page-title">
+  <div class="title-letters" id="titleLetters"></div>
+  <p class="title-tagline">✨ Type a name, age & hobby — get a card worth keeping ✨</p>
+</div>
+
+<div class="workspace">
+
+  <!-- LEFT: Sticky Form -->
+  <div class="form-panel">
+    <div class="form-label-top">🎂 Fill in the details</div>
+    <div class="field">
+      <label for="name">👤 Name</label>
+      <input type="text" id="name" placeholder="e.g. Sarah" maxlength="50" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="age">🎂 Age</label>
+      <input type="number" id="age" placeholder="e.g. 30" min="1" max="150" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="hobby">🎯 Hobby</label>
+      <input type="text" id="hobby" placeholder="e.g. gardening, video games..." maxlength="80" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="adjective">✨ Adjective</label>
+      <input type="text" id="adjective" placeholder="e.g. chaotic, sparkly, ancient..." maxlength="50" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="pluralnoun">🦄 Plural Noun</label>
+      <input type="text" id="pluralnoun" placeholder="e.g. cheese wheels, velociraptors..." maxlength="60" autocomplete="off">
+    </div>
+    <button id="luckyBtn" onclick="feelingLucky()">🎲 I'm Feeling Lucky</button>
+    <button id="generateBtn" onclick="generateMessage()">✨ Generate Card</button>
+    <div class="error" id="errorMsg"></div>
+  </div>
+
+  <!-- RIGHT: Stacking Cards -->
+  <div class="card-stack-panel" id="cardStack">
+    <div class="empty-hint" id="emptyHint">
+      <span class="big">🎈</span>
+      Cards you generate will<br>stack up here...
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const luckyNames    = ['Gerald','Brenda','Reginald','Mildred','Bartholomew','Gertrude','Eugene','Hildegard','Mortimer','Bernadette','Cornelius','Ethel'];
+  const luckyAges     = [30, 40, 50, 60, 21, 69, 42, 100, 33, 55, 77, 25];
+  const luckyHobbies  = ['competitive napping','aggressive couponing','talking to houseplants','collecting vintage cheese','speed-walking to the mailbox','arguing with the TV remote','training squirrels','doomscrolling professionally','rewatching the same 3 shows','overthinking mildly','bird law','aggressive sudoku'];
+  const luckyAdjs     = ['suspiciously sweaty','chronically confused','aggressively beige','chaotically wholesome','disturbingly cheerful','ominously serene','mildly cursed','surprisingly dense','professionally lost','legally questionable','enthusiastically mediocre','biblically ancient'];
+  const luckyNouns    = ['sentient croutons','rogue kazoos','unsolicited life advice','expired coupons','feral accountants','slightly damp socks','overconfident pigeons','rogue office chairs','emotional support spreadsheets','emergency cheese cubes','passive-aggressive sticky notes','uninvited harmonicas'];
+
+  function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+  function feelingLucky() {
+    const fields = [
+      { id: 'name',      val: pick(luckyNames) },
+      { id: 'age',       val: pick(luckyAges) },
+      { id: 'hobby',     val: pick(luckyHobbies) },
+      { id: 'adjective', val: pick(luckyAdjs) },
+      { id: 'pluralnoun',val: pick(luckyNouns) },
+    ];
+    fields.forEach(({ id, val }) => {
+      const el = document.getElementById(id);
+      el.value = val;
+      el.classList.remove('lucky-flash');
+      void el.offsetWidth; // reflow to restart animation
+      el.classList.add('lucky-flash');
+    });
+    document.getElementById('errorMsg').textContent = '';
+  }
+
+
+  const titleText = "Birthday Card Maker!";
+  const titleEl = document.getElementById('titleLetters');
+  [...titleText].forEach(ch => {
+    const span = document.createElement('span');
+    span.className = 'letter' + (ch === ' ' ? ' space' : '');
+    span.textContent = ch === ' ' ? '\u00A0' : ch;
+    titleEl.appendChild(span);
+  });
+
+  // Cover gradients for cycling card colours
+  const coverGradients = [
+    'linear-gradient(170deg, #ff6bb5, #a040e0)',
+    'linear-gradient(170deg, #ff8c42, #ff4d8d)',
+    'linear-gradient(170deg, #06d6a0, #4895ef)',
+    'linear-gradient(170deg, #ffd166, #ff8c42)',
+    'linear-gradient(170deg, #4895ef, #b388ff)',
+    'linear-gradient(170deg, #b388ff, #ff6bb5)',
+  ];
+  const coverIcons = ['🎈🎁🎂','🥳🎊🎉','🌟🎀🎈','🍰🎁🌈','🎶🎂🎊','💜🎈✨'];
+  let cardCount = 0;
+
+  async function generateMessage() {
+    const name      = document.getElementById('name').value.trim();
+    const age       = document.getElementById('age').value.trim();
+    const hobby     = document.getElementById('hobby').value.trim();
+    const adjective = document.getElementById('adjective').value.trim();
+    const pluralnoun= document.getElementById('pluralnoun').value.trim();
+    const errorMsg  = document.getElementById('errorMsg');
+    const btn       = document.getElementById('generateBtn');
+
+    errorMsg.textContent = '';
+    if (!name || !age || !hobby || !adjective || !pluralnoun) {
+      errorMsg.textContent = 'Please fill in all five fields!';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = '🎂 Writing...';
+
+    // Hide empty hint
+    document.getElementById('emptyHint').classList.add('hidden');
+
+    // Pick cover style
+    const ci = cardCount % coverGradients.length;
+    const iconSet = coverIcons[ci].split('');
+    cardCount++;
+
+    // Build a loading card and prepend it
+    const cardWrapper = document.createElement('div');
+    cardWrapper.innerHTML = `
+      <div class="open-card">
+        <div class="card-cover" style="background:${coverGradients[ci]}">
+          <div class="cover-icons">${iconSet.join('<br>')}</div>
+          <span class="cover-text">Happy Birthday</span>
+        </div>
+        <div class="card-inner">
+          <div class="margin-line"></div>
+          <span class="corner-deco tl">✿</span>
+          <span class="corner-deco tr">✦</span>
+          <span class="corner-deco bl">✦</span>
+          <span class="corner-deco br">✿</span>
+          <div class="card-loading">
+            <div class="loading-dots"><span>🎈</span><span>🎉</span><span>🎂</span></div>
+            <p>Writing something wonderful...</p>
+          </div>
+        </div>
+      </div>
+      <button class="card-copy-btn hidden"></button>
+    `;
+
+    const stack = document.getElementById('cardStack');
+    stack.prepend(cardWrapper);
+
+    const loadingDiv   = cardWrapper.querySelector('.card-loading');
+    const cardInner    = cardWrapper.querySelector('.card-inner');
+    const copyBtn      = cardWrapper.querySelector('.card-copy-btn');
+
+    const prompt = `Write a short, funny, warm birthday card message for ${name}, who is turning ${age} and loves ${hobby}. You must work in the adjective "${adjective}" and the plural noun "${pluralnoun}" somewhere in the message in a creative, funny way. Make it personal, witty, and genuinely funny. Keep it 3–5 sentences, conversational, no hashtags, no emojis inside the message itself. Just the message text, nothing else.`;
+
+    try {
+      const response = await fetch("/.netlify/functions/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt })
+      });
+
+      const data = await response.json();
+      const text = data.content?.map(b => b.text || '').join('') || '';
+      if (!text) throw new Error('empty');
+
+      // Replace loading with message
+      loadingDiv.remove();
+
+      const nameTag = document.createElement('div');
+      nameTag.className = 'card-name-tag';
+      nameTag.textContent = `For ${name}, turning ${age} 🎂`;
+
+      const greeting = document.createElement('div');
+      greeting.className = 'card-greeting';
+      greeting.textContent = `Happy Birthday, ${name}! 🎉`;
+
+      const msgEl = document.createElement('div');
+      msgEl.className = 'card-message-text';
+      msgEl.textContent = text.trim();
+
+      const signOff = document.createElement('div');
+      signOff.className = 'card-sign-off';
+      signOff.textContent = 'With love 💕';
+
+      cardInner.appendChild(nameTag);
+      cardInner.appendChild(greeting);
+      cardInner.appendChild(msgEl);
+      cardInner.appendChild(signOff);
+
+      // Copy button
+      const fullMsg = `Happy Birthday, ${name}! 🎉\n\n${text.trim()}\n\nWith love 💕`;
+      copyBtn.textContent = '📋 Copy Message';
+      copyBtn.classList.remove('hidden');
+      copyBtn.onclick = () => {
+        navigator.clipboard.writeText(fullMsg).then(() => {
+          copyBtn.textContent = '✅ Copied!';
+          setTimeout(() => copyBtn.textContent = '📋 Copy Message', 2000);
+        });
+      };
+
+    } catch (err) {
+      loadingDiv.innerHTML = '<p style="color:#ff8888">Something went wrong. Please try again!</p>';
+    }
+
+    btn.disabled = false;
+    btn.textContent = '✨ Generate Card';
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter') generateMessage();
+  });
+
+  // ── Floating bg dots ──
+  const colors = ['#ff4d8d','#ff8c42','#ffd166','#06d6a0','#4895ef','#b388ff'];
+  const container = document.getElementById('bgDots');
+  for (let i = 0; i < 30; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'dot';
+    const size = Math.random() * 18 + 8;
+    dot.style.width  = size + 'px';
+    dot.style.height = size + 'px';
+    dot.style.left   = (Math.random() * 100) + '%';
+    dot.style.background = colors[Math.floor(Math.random() * colors.length)];
+    dot.style.animationDuration  = (Math.random() * 14 + 8) + 's';
+    dot.style.animationDelay     = '-' + (Math.random() * 10) + 's';
+    container.appendChild(dot);
+  }
+</script>
+</body>
+</html>
