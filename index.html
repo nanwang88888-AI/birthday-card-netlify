@@ -522,35 +522,70 @@
     const iconSet = coverIcons[ci].split('');
     cardCount++;
 
-    // Build a loading card and prepend it
+    // Build a loading card using safe DOM methods (no innerHTML)
     const cardWrapper = document.createElement('div');
-    cardWrapper.innerHTML = `
-      <div class="open-card">
-        <div class="card-cover" style="background:${coverGradients[ci]}">
-          <div class="cover-icons">${iconSet.join('<br>')}</div>
-          <span class="cover-text">Happy Birthday</span>
-        </div>
-        <div class="card-inner">
-          <div class="margin-line"></div>
-          <span class="corner-deco tl">✿</span>
-          <span class="corner-deco tr">✦</span>
-          <span class="corner-deco bl">✦</span>
-          <span class="corner-deco br">✿</span>
-          <div class="card-loading">
-            <div class="loading-dots"><span>🎈</span><span>🎉</span><span>🎂</span></div>
-            <p>Writing something wonderful...</p>
-          </div>
-        </div>
-      </div>
-      <button class="card-copy-btn hidden"></button>
-    `;
+
+    const openCard = document.createElement('div');
+    openCard.className = 'open-card';
+
+    // Cover
+    const cardCover = document.createElement('div');
+    cardCover.className = 'card-cover';
+    cardCover.style.background = coverGradients[ci];
+
+    const coverIconsDiv = document.createElement('div');
+    coverIconsDiv.className = 'cover-icons';
+    coverIcons[ci].split('').forEach(icon => {
+      const span = document.createElement('span');
+      span.textContent = icon;
+      coverIconsDiv.appendChild(span);
+    });
+    const coverTextSpan = document.createElement('span');
+    coverTextSpan.className = 'cover-text';
+    coverTextSpan.textContent = 'Happy Birthday';
+    cardCover.appendChild(coverIconsDiv);
+    cardCover.appendChild(coverTextSpan);
+
+    // Inner page
+    const cardInner = document.createElement('div');
+    cardInner.className = 'card-inner';
+
+    const marginLine = document.createElement('div');
+    marginLine.className = 'margin-line';
+
+    const tl = document.createElement('span'); tl.className = 'corner-deco tl'; tl.textContent = '✿';
+    const tr = document.createElement('span'); tr.className = 'corner-deco tr'; tr.textContent = '✦';
+    const bl = document.createElement('span'); bl.className = 'corner-deco bl'; bl.textContent = '✦';
+    const br = document.createElement('span'); br.className = 'corner-deco br'; br.textContent = '✿';
+
+    const loadingDiv = document.createElement('div');
+    loadingDiv.className = 'card-loading';
+    const dotsDiv = document.createElement('div');
+    dotsDiv.className = 'loading-dots';
+    ['🎈','🎉','🎂'].forEach(e => {
+      const s = document.createElement('span'); s.textContent = e; dotsDiv.appendChild(s);
+    });
+    const loadingP = document.createElement('p');
+    loadingP.textContent = 'Writing something wonderful...';
+    loadingDiv.appendChild(dotsDiv);
+    loadingDiv.appendChild(loadingP);
+
+    cardInner.appendChild(marginLine);
+    cardInner.appendChild(tl); cardInner.appendChild(tr);
+    cardInner.appendChild(bl); cardInner.appendChild(br);
+    cardInner.appendChild(loadingDiv);
+
+    openCard.appendChild(cardCover);
+    openCard.appendChild(cardInner);
+
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'card-copy-btn hidden';
+
+    cardWrapper.appendChild(openCard);
+    cardWrapper.appendChild(copyBtn);
 
     const stack = document.getElementById('cardStack');
     stack.prepend(cardWrapper);
-
-    const loadingDiv   = cardWrapper.querySelector('.card-loading');
-    const cardInner    = cardWrapper.querySelector('.card-inner');
-    const copyBtn      = cardWrapper.querySelector('.card-copy-btn');
 
     const prompt = `Write a short, funny, warm birthday card message for ${name}, who is turning ${age} and loves ${hobby}. You must work in the adjective "${adjective}" and the plural noun "${pluralnoun}" somewhere in the message in a creative, funny way. Make it personal, witty, and genuinely funny. Keep it 3–5 sentences, conversational, no hashtags, no emojis inside the message itself. Just the message text, nothing else.`;
 
@@ -601,7 +636,11 @@
       };
 
     } catch (err) {
-      loadingDiv.innerHTML = '<p style="color:#ff8888">Something went wrong. Please try again!</p>';
+      loadingDiv.textContent = '';
+      const errP = document.createElement('p');
+      errP.style.color = '#ff8888';
+      errP.textContent = 'Something went wrong. Please try again!';
+      loadingDiv.appendChild(errP);
     }
 
     btn.disabled = false;
